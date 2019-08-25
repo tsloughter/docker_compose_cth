@@ -59,9 +59,6 @@ do_init(Config, State=#{executable_search_path := Path}) ->
             end
     end.
 
-%% TODO support shutting down post suite
-
-%% TODO support not running down here if shutdown in post suite or no_shutdown is true
 terminate(#{stop := false}) ->
     ok;
 terminate(#{docker_compose_path := undefined}) ->
