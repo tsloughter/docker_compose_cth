@@ -11,6 +11,12 @@ Shutdown of the services happens in the hook's `terminate` function which is cal
 
 ## Examples
 
+First, the hook must be included as a dependency of the rebar3 project. Since the hook is only used by Common Test it can be put in the `test` profile:
+
+``` erlang
+{profiles, [{test, [{deps, [docker_compose_cth]}]}]}.
+```
+
 Hooks can be declared in `rebar.config` with `ct_opts`:
 
 ``` erlang
