@@ -26,6 +26,7 @@ For additional methods for installing and configuring the hook [check the docs](
 
 ## Todo
 
+* Start/stop on group instead of suite
 * Support a path to the `docker-compose.yml` file.
 * Support shutting down the compose services post suite.
 * Support never shutting down the compose services.
