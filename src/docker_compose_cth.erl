@@ -2,14 +2,20 @@
 
 -export([init/2,
          pre_init_per_suite/3,
+         post_init_per_suite/4,
+         post_init_per_group/5,
          terminate/1]).
 
--define(DEFAULTS, #{docker_compose_path => undefined,
+-define(DEFAULTS, #{stop => true,
+                    post_init => false,
+                    docker_compose_path => undefined,
                     executable_search_path => undefined,
                     check_if_running => false,
                     skip_or_fail => fail}).
 
--type state() :: #{docker_compose_path := filename:filename_all() | undefined,
+-type state() :: #{stop => boolean(),
+                   post_init => boolean(),
+                   docker_compose_path := filename:filename_all() | undefined,
                    executable_search_path := [filename:filename_all()],
                    check_if_running := string() | {string(), [string()]} | false,
                    skip_or_fail := skip | fail}.
@@ -24,23 +30,40 @@ init(_Id, _Opts) ->
     {ok, State}.
 
 %% Called before init_per_suite is called.
-pre_init_per_suite(_Suite, Config, State=#{executable_search_path := Path}) ->
+pre_init_per_suite(_Suite, Config, State) ->
+    do_init(Config, State).
+
+%% Called after init_per_suite is called.
+post_init_per_suite(_Suite, _Config, Return, State=#{post_init := false}) ->
+    do_init(Return, State);
+post_init_per_suite(_Suite, _Config, Return, State) ->
+    {Return, State}.
+
+%% Called after init_per_group is called.
+post_init_per_group(_Suite, _Group, _Config, Return, State=#{post_init := false}) ->
+    do_init(Return, State);
+post_init_per_group(_Suite, _Group, _Config, Return, State) ->
+    {Return, State}.
+
+do_init(Config, State=#{executable_search_path := Path}) ->
     case find_executable("docker-compose", Path) of
         false ->
-            {{fail, "docker-compose not found in PATH"}, State};
+            {{fail, "docker-compose not found in PATH"}, State#{post_init => true}};
         DockerCompose ->
             State1 = State#{docker_compose_path => DockerCompose},
             case up_if_not_running(State1) of
                 ok ->
-                    {Config, State1};
+                    {Config, State1#{post_init => true}};
                 {fail, _}=Fail ->
-                    {Fail, State1}
+                    {Fail, State1#{post_init => true}}
             end
     end.
 
 %% TODO support shutting down post suite
 
 %% TODO support not running down here if shutdown in post suite or no_shutdown is true
+terminate(#{stop := false}) ->
+    ok;
 terminate(#{docker_compose_path := undefined}) ->
     ok;
 terminate(#{docker_compose_path := DockerCompose}) ->
