@@ -51,6 +51,7 @@ init_per_group(Group, Config) ->
 * `check_if_running`: A string that is the name of the service to check for before running `docker-compose up`. If defined the hook will check if a service is already up and not call `docker-compose up` if it is. By default this is done by attempting `exec ls` in the service's container, but the command can be set to anything by passing a tuple `{Service, Command}`
 * `skip_or_fail`: The atom `skip` or `fail` (default is `fail`). If the hook is unable to bring up the service with docker-compose then the suite will either skip or fail, depending on this configuration.
 * `stop`: Boolean value that if `false` means the services with not be shutdown when the hook terminates.
+* `remove_volumes`: Boolean value. If `true`, the flag `-v` will be passed to `docker-compose down` which deletes volumes not specifically defined as `external` in the compose file.
 
 
 

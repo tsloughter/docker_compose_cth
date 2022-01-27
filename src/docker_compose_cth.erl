@@ -14,7 +14,8 @@
                     docker_compose_path => undefined,
                     executable_search_path => undefined,
                     check_if_running => false,
-                    skip_or_fail => fail}).
+                    skip_or_fail => fail,
+                    remove_volumes => false}).
 
 -type state() :: #{stop => boolean(),
                    post_init => boolean(),
@@ -22,7 +23,8 @@
                    docker_compose_path := file:filename_all() | undefined,
                    executable_search_path := [file:filename_all()],
                    check_if_running := string() | {string(), [string()]} | false,
-                   skip_or_fail := skip | fail}.
+                   skip_or_fail := skip | fail,
+                   remove_volumes := boolean()}.
 
 %% Always called before any other callback function. Use this to initiate
 %% any common state.
@@ -81,8 +83,9 @@ terminate(#{stop := false}) ->
 terminate(#{docker_compose_path := undefined}) ->
     ok;
 terminate(#{docker_compose_path := DockerCompose,
-            docker_compose_file := DockerComposeFile}) ->
-    down(DockerCompose, DockerComposeFile).
+            docker_compose_file := DockerComposeFile,
+            remove_volumes := RemoveVolumes}) ->
+    down(DockerCompose, DockerComposeFile, RemoveVolumes).
 
 %%
 
@@ -120,8 +123,12 @@ up(DockerCompose, DockerComposeFile) ->
             {fail, io_lib:format("docker-compose failed to run, exit_status=~p", [E])}
     end.
 
-down(DockerCompose, DockerComposeFile) ->
-    case do(DockerCompose, DockerComposeFile, ["down"]) of
+down(DockerCompose, DockerComposeFile, RemoveVolumes) ->
+    OtherArgs = case RemoveVolumes of
+        true -> ["-v"];
+        false -> []
+    end,
+    case do(DockerCompose, DockerComposeFile, ["down" | OtherArgs]) of
         0 ->
             ok;
         E ->
